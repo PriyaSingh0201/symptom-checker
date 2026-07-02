@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Register • Symptom Checker{% endblock %}
+
+{% block content %}
+<section class="auth-container">
+  <div class="auth-card">
+    <div class="auth-hero">
+      <div class="auth-logo-wrap">
+        <img class="auth-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="Symptom Checker logo" />
+      </div>
+      <h1 data-i18n="createAccountTitle">Create your account</h1>
+      <p data-i18n="registerIntro">Register to start tracking symptoms and receive smart guidance.</p>
+    </div>
+    <form id="register-form" class="auth-form">
+      <input type="text" name="fullname" placeholder="Full name" required />
+      <input type="email" name="email" placeholder="Email address" required />
+      <input type="password" name="password" placeholder="Password" required />
+      <input type="password" name="confirm_password" placeholder="Confirm password" required />
+      <button class="primary-btn" type="submit" data-i18n="createAccountButton">Create account</button>
+      <p class="auth-switch"><span data-i18n="haveAccount">Already have an account?</span> <a href="{{ url_for('auth.login_page') }}" data-i18n="loginLink">Login</a></p>
+      <div id="form-message" class="form-message"></div>
+    </form>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('register-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = document.getElementById('form-message');
+    const payload = {
+      fullname: form.fullname.value,
+      email: form.email.value,
+      password: form.password.value,
+      confirm_password: form.confirm_password.value,
+    };
+
+    message.textContent = 'Creating your account...';
+    const response = await fetch('/api/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    if (response.ok) {
+      message.textContent = data.message;
+      setTimeout(() => window.location.href = '/login', 800);
+    } else {
+      message.textContent = data.error || 'Registration failed';
+    }
+  });
+</script>
+{% endblock %}

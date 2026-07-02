@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Profile • Symptom Checker{% endblock %}
+
+{% block content %}
+<section class="page-card">
+  <div class="section-heading">
+    <p class="eyebrow">Your profile</p>
+    <h1>Account overview</h1>
+    <p>Manage account details and change your password securely.</p>
+  </div>
+
+  <div id="profile-card" class="profile-card"></div>
+
+  <form id="password-form" class="assessment-form">
+    <h3>Change password</h3>
+    <input type="password" name="current_password" placeholder="Current password" required />
+    <input type="password" name="new_password" placeholder="New password" required />
+    <input type="password" name="confirm_password" placeholder="Confirm password" required />
+    <button class="primary-btn" type="submit">Update password</button>
+    <div id="password-message" class="form-message"></div>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/login';
+
+  async function loadProfile() {
+    const response = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
+    const data = await response.json();
+    document.getElementById('profile-card').innerHTML = `
+      <p><strong>Name:</strong> ${data.fullname}</p>
+      <p><strong>Email:</strong> ${data.email}</p>
+      <p><strong>Joined:</strong> ${data.created_at}</p>
+      <p><strong>Total Assessments:</strong> ${data.total_assessments}</p>
+    `;
+  }
+
+  document.getElementById('password-form').addEventListener('submit', async (event) => {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const message = document.getElementById('password-message');
+    const payload = {
+      current_password: form.current_password.value,
+      new_password: form.new_password.value,
+      confirm_password: form.confirm_password.value,
+    };
+
+    const response = await fetch('/api/change-password', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(payload),
+    });
+    const data = await response.json();
+    message.textContent = data.message || data.error || 'Password update failed';
+    form.reset();
+  });
+
+  loadProfile();
+</script>
+{% endblock %}

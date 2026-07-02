@@ -1,0 +1,65 @@
+{% extends 'base.html' %}
+{% block title %}Dashboard • Symptom Checker{% endblock %}
+
+{% block content %}
+<section class="dashboard-shell">
+  <div class="hero-card">
+    <div>
+      <p class="eyebrow">Your health dashboard</p>
+      <h1>Welcome, <span id="user-name">User</span></h1>
+      <p id="today-date" class="hero-copy"></p>
+      <p class="hero-copy">Today’s tip: Stay hydrated, rest well, and monitor changes in your symptoms.</p>
+    </div>
+    <div class="hero-badge">🩺 AI-guided insights</div>
+  </div>
+
+  <div class="cards-grid">
+    <a class="feature-card" href="{{ url_for('symptom.assessment_page') }}">
+      <div class="feature-icon">🧪</div>
+      <h3>Symptom Checker</h3>
+      <p>Describe your symptoms and receive a structured assessment.</p>
+    </a>
+    <a class="feature-card" href="{{ url_for('history.history_page') }}">
+      <div class="feature-icon">🗂️</div>
+      <h3>Previous Assessments</h3>
+      <p>Review and search your full symptom history.</p>
+    </a>
+    <a class="feature-card" href="{{ url_for('profile.profile_page') }}">
+      <div class="feature-icon">👤</div>
+      <h3>Profile</h3>
+      <p>Update your account and see your assessment summary.</p>
+    </a>
+    <button class="feature-card feature-card-action" id="logout-card" type="button">
+      <div class="feature-icon">🔒</div>
+      <h3>Logout</h3>
+      <p>Securely end your current session.</p>
+    </button>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/login';
+
+  async function loadProfile() {
+    const response = await fetch('/api/profile', {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    if (response.ok) {
+      document.getElementById('user-name').textContent = data.fullname || 'User';
+      document.getElementById('today-date').textContent = new Date().toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    }
+  }
+
+  document.getElementById('logout-card').addEventListener('click', async () => {
+    await fetch('/api/logout', { method: 'POST', headers: { Authorization: `Bearer ${token}` } });
+    localStorage.removeItem('token');
+    window.location.href = '/login';
+  });
+
+  loadProfile();
+</script>
+{% endblock %}

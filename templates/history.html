@@ -1,0 +1,90 @@
+{% extends 'base.html' %}
+{% block title %}History • Symptom Checker{% endblock %}
+
+{% block content %}
+<section class="page-card">
+  <div class="section-heading">
+    <p class="eyebrow">Assessment history</p>
+    <h1>Your saved evaluations</h1>
+    <p>Review, search, and download previous assessment reports.</p>
+  </div>
+
+  <div class="history-toolbar">
+    <input id="history-search" type="text" placeholder="Search by symptom or condition" />
+    <select id="history-severity">
+      <option value="">All severities</option>
+      <option value="Mild">Mild</option>
+      <option value="Moderate">Moderate</option>
+      <option value="Severe">Severe</option>
+    </select>
+    <select id="history-sort">
+      <option value="newest">Newest first</option>
+      <option value="oldest">Oldest first</option>
+    </select>
+  </div>
+
+  <div id="history-list" class="history-list"></div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const token = localStorage.getItem('token');
+  if (!token) window.location.href = '/login';
+
+  async function loadHistory() {
+    const params = new URLSearchParams({
+      keyword: document.getElementById('history-search').value,
+      severity: document.getElementById('history-severity').value,
+      sort: document.getElementById('history-sort').value,
+    });
+
+    const response = await fetch(`/api/history?${params.toString()}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const data = await response.json();
+    const list = document.getElementById('history-list');
+    if (!response.ok) {
+      list.innerHTML = '<p>Unable to load history.</p>';
+      return;
+    }
+
+    if (!data.assessments.length) {
+      list.innerHTML = '<p>No assessments found yet.</p>';
+      return;
+    }
+
+    list.innerHTML = data.assessments.map(item => `
+      <article class="history-item">
+        <div class="history-top">
+          <strong>${item.possible_condition}</strong>
+          <span class="severity-badge ${item.severity.toLowerCase()}">${item.severity}</span>
+        </div>
+        <p>${item.symptoms}</p>
+        <div class="history-meta">
+          <span>${item.created_date}</span>
+          <span>${item.recommended_doctor}</span>
+        </div>
+        <div class="history-actions">
+          <a class="ghost-btn" href="/api/download-pdf/${item.id}" target="_blank">Download PDF</a>
+          <button class="secondary-btn" type="button" data-id="${item.id}">Delete</button>
+        </div>
+      </article>
+    `).join('');
+
+    list.querySelectorAll('button[data-id]').forEach(button => {
+      button.addEventListener('click', async () => {
+        const id = button.getAttribute('data-id');
+        await fetch(`/api/history/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        loadHistory();
+      });
+    });
+  }
+
+  document.getElementById('history-search').addEventListener('input', loadHistory);
+  document.getElementById('history-severity').addEventListener('change', loadHistory);
+  document.getElementById('history-sort').addEventListener('change', loadHistory);
+
+  loadHistory();
+</script>
+{% endblock %}

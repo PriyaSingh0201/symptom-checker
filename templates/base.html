@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{% block title %}Symptom Checker{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+    {% block head %}{% endblock %}
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="{{ url_for('dashboard.dashboard') }}">
+          <img class="brand-logo" src="{{ url_for('static', filename='images/logo.png') }}" alt="Symptom Checker logo" />
+          <span>Symptom Checker</span>
+        </a>
+        <nav class="topnav">
+          {% if request.path.startswith('/dashboard') or request.path.startswith('/assessment') or request.path.startswith('/history') or request.path.startswith('/profile') %}
+            <a href="{{ url_for('dashboard.dashboard') }}" data-i18n="dashboard">Dashboard</a>
+            <a href="{{ url_for('symptom.assessment_page') }}" data-i18n="checker">Checker</a>
+            <a href="{{ url_for('history.history_page') }}" data-i18n="history">History</a>
+            <a href="{{ url_for('profile.profile_page') }}" data-i18n="profile">Profile</a>
+            <button id="theme-toggle" class="ghost-btn" type="button">🌙</button>
+            <button id="lang-toggle" class="ghost-btn" type="button">हिंदी</button>
+            <button id="logout-btn" class="ghost-btn" type="button" data-i18n="logout">Logout</button>
+          {% endif %}
+        </nav>
+      </header>
+
+      <main>{% block content %}{% endblock %}</main>
+
+      <footer class="footer">
+        <p data-i18n="footer">© 2026 Symptom Checker • Secure, modern symptom guidance</p>
+      </footer>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+    {% block scripts %}{% endblock %}
+  </body>
+</html>

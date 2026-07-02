@@ -1,0 +1,9 @@
+{% extends 'base.html' %}
+{% block title %}Unauthorized{% endblock %}
+{% block content %}
+<section class="page-card error-page">
+  <h1>401</h1>
+  <p>You need to be signed in to access this page.</p>
+  <a class="primary-btn" href="/login">Go to login</a>
+</section>
+{% endblock %}
