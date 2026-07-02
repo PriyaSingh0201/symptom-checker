@@ -75,7 +75,7 @@ gunicorn app:app
    ```
 4. Set the start command to:
    ```bash
-   gunicorn app:app
+   gunicorn app:app --bind 0.0.0.0:$PORT
    ```
 5. Add environment variables on Render:
    - `SECRET_KEY`
