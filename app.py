@@ -27,9 +27,11 @@ def create_app(test_config=None):
     app.config.update(
         SECRET_KEY=os.getenv("SECRET_KEY", "dev-secret-key"),
         JWT_SECRET_KEY=os.getenv("JWT_SECRET_KEY", "dev-jwt-secret"),
-        SQLALCHEMY_DATABASE_URI=os.getenv(
-            "DATABASE_URL", f"sqlite:///{INSTANCE_DIR / 'database.db'}"
-        ),
+        SQLALCHEMY_DATABASE_URI=(
+            lambda url: url.replace("postgres://", "postgresql://", 1)
+            if url.startswith("postgres://")
+            else url
+        )(os.getenv("DATABASE_URL", f"sqlite:///{INSTANCE_DIR / 'database.db'}")),
         SQLALCHEMY_TRACK_MODIFICATIONS=False,
         UPLOAD_FOLDER=str(UPLOAD_DIR),
         MAX_CONTENT_LENGTH=16 * 1024 * 1024,

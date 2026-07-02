@@ -53,6 +53,8 @@ GEMINI_API_KEY=optional
 PORT=5000
 ```
 
+For Render deployment, set `DATABASE_URL` to the managed Postgres URL provided by Render, and keep `SECRET_KEY` and `JWT_SECRET_KEY` secure.
+
 ## Run Locally
 ```bash
 python app.py
@@ -63,6 +65,24 @@ Then open `http://localhost:5000` in your browser.
 ```bash
 gunicorn app:app
 ```
+
+## Deploy to Render
+1. Push the repository to a Git provider connected to Render.
+2. Create a new Web Service on Render.
+3. Select Python and set the build command to:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Set the start command to:
+   ```bash
+   gunicorn app:app
+   ```
+5. Add environment variables on Render:
+   - `SECRET_KEY`
+   - `JWT_SECRET_KEY`
+   - `DATABASE_URL`
+   - `GEMINI_API_KEY` (optional)
+6. If you want Render to host the database, create a Render Postgres database and use the provided `DATABASE_URL`.
 
 ## Testing
 Run unit tests with:
