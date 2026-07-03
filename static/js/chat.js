@@ -8,13 +8,13 @@
   let toggle, chatWindow, closeBtn, clearBtn, messages, input, sendBtn,
       statusEl, contextBanner, contextText, unreadBadge, suggestions;
 
-  // ── State ────────────────────────────────────────────────────────────────
+  // ── State ────────────────────────────────────────────────────────────
   let isOpen = false;
   let isLoading = false;
   let sessionHistory = [];   // { role, text, time }
   let currentAssessmentId = null;
 
-  // ── Init ─────────────────────────────────────────────────────────────────
+  //  Init 
   document.addEventListener('DOMContentLoaded', () => {
     toggle        = document.getElementById('chat-widget-toggle');
     chatWindow    = document.getElementById('chat-widget-window');
@@ -362,7 +362,7 @@
     if (el) el.remove();
   }
 
-  // ── Helpers ──────────────────────────────────────────────────────────────
+  // Helpers 
   function scrollToBottom() {
     setTimeout(() => { messages.scrollTop = messages.scrollHeight; }, 50);
   }

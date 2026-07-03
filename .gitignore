@@ -6,9 +6,11 @@ __pycache__/
 *.sqlite3
 .env
 .venv/
+.venv-1/
 venv/
 instance/
 uploads/
 .pytest_cache/
 coverage/
 .DS_Store
+Screenshot*
