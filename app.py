@@ -50,6 +50,38 @@ def create_app(test_config=None):
 
         db.create_all()
 
+        # Phase 2 Database Migrations
+        from sqlalchemy import inspect
+        inspector = inspect(db.engine)
+        if inspector.has_table("assessments"):
+            existing_cols = {col["name"] for col in inspector.get_columns("assessments")}
+            required_cols = {
+                "weight": "VARCHAR(50)",
+                "height": "VARCHAR(50)",
+                "pain_level": "INTEGER",
+                "allergies": "TEXT",
+                "medications": "TEXT",
+                "primary_symptom": "VARCHAR(255)",
+                "secondary_symptoms": "TEXT",
+                "smoking_status": "VARCHAR(50)",
+                "alcohol_consumption": "VARCHAR(50)",
+                "body_temperature": "FLOAT",
+                "blood_pressure": "VARCHAR(50)",
+                "pregnancy_status": "VARCHAR(50)",
+                "confidence_score": "FLOAT",
+                "top_conditions": "TEXT",
+                "evidence_sources": "TEXT",
+                "emergency_flag": "BOOLEAN",
+                "consultation_id": "VARCHAR(100)",
+                "followup_responses": "TEXT",
+                "followup_questions": "TEXT",
+            }
+            with db.engine.begin() as conn:
+                for col_name, col_type in required_cols.items():
+                    if col_name not in existing_cols:
+                        default_val = " DEFAULT 0" if col_name == "emergency_flag" else ""
+                        conn.execute(db.text(f"ALTER TABLE assessments ADD COLUMN {col_name} {col_type}{default_val}"))
+
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(history_bp)

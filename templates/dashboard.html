@@ -1,18 +1,62 @@
 {% extends 'base.html' %}
-{% block title %}Dashboard • Symptom Checker{% endblock %}
+{% block title %}Dashboard • Clinical Intelligence Engine{% endblock %}
 
 {% block content %}
 <section class="dashboard-shell">
+  <!-- Top level welcome and date -->
   <div class="hero-card">
     <div>
       <p class="eyebrow">Your health dashboard</p>
       <h1>Welcome, <span id="user-name">User</span></h1>
       <p id="today-date" class="hero-copy"></p>
-      <p class="hero-copy">Today’s tip: Stay hydrated, rest well, and monitor changes in your symptoms.</p>
+      <p class="hero-copy">Today’s tip: Monitor vital signs, note symptoms, and consult healthcare professionals for persistent issues.</p>
     </div>
-    <div class="hero-badge">🩺 AI-guided insights</div>
+    <div class="hero-badge">🩺 Clinical Intelligence Engine</div>
   </div>
 
+  <!-- Emergency Card Widget (Hidden by default) -->
+  <div id="dashboard-emergency-card" class="emergency-alert-card hidden">
+    <div class="alert-card-header">
+      <span class="alert-icon">🚨</span>
+      <h3>CRITICAL EMERGENCY ALERT</h3>
+    </div>
+    <p>Your latest assessment detected life-threatening indicators! Immediate medical attention is recommended. Bypassing standard self-care guidelines. Please visit Emergency Medicine immediately.</p>
+    <a href="{{ url_for('history.history_page') }}" class="primary-btn emergency-btn-alert">View Critical Details</a>
+  </div>
+
+  <!-- Clinical Widgets Row -->
+  <div id="widgets-row" class="widgets-row hidden">
+    <div class="widget-card">
+      <p class="widget-eyebrow">LATEST ASSESSMENT</p>
+      <h2 id="widget-condition" class="widget-title">None</h2>
+      <div id="widget-severity-badge" class="severity-badge mild" style="display:inline-block; margin-bottom:0.75rem;">Mild</div>
+      <p id="widget-summary" style="font-size:0.9rem; margin:0; line-height:1.4; color:var(--text-muted);"></p>
+    </div>
+
+    <div class="widget-card">
+      <p class="widget-eyebrow">CLINICAL CONFIDENCE MATCH</p>
+      <div class="widget-stat" id="widget-confidence">0%</div>
+      <div class="progress" style="margin-top: 0.5rem; height: 8px;">
+        <div id="widget-confidence-bar" class="progress-bar" style="width: 0%;"></div>
+      </div>
+    </div>
+
+    <div class="widget-card">
+      <p class="widget-eyebrow">RECOMMENDED SPECIALIST</p>
+      <div class="widget-specialist-box">
+        <span class="specialist-icon">🩺</span>
+        <span id="widget-department">General Medicine</span>
+      </div>
+      <p style="font-size:0.85rem; margin-top:0.5rem; color:var(--text-muted);">Please schedule an appointment with this department.</p>
+    </div>
+
+    <div class="widget-card">
+      <p class="widget-eyebrow">RECENT SYMPTOMS</p>
+      <div class="symptom-tags-list" id="widget-symptoms"></div>
+    </div>
+  </div>
+
+  <!-- Navigation Grid -->
   <div class="cards-grid">
     <a class="feature-card" href="{{ url_for('symptom.assessment_page') }}">
       <div class="feature-icon">🧪</div>
@@ -43,14 +87,49 @@
   const token = localStorage.getItem('token');
   if (!token) window.location.href = '/login';
 
-  async function loadProfile() {
-    const response = await fetch('/api/profile', {
+  async function loadDashboard() {
+    const response = await fetch('/api/dashboard', {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = await response.json();
     if (response.ok) {
       document.getElementById('user-name').textContent = data.fullname || 'User';
       document.getElementById('today-date').textContent = new Date().toLocaleDateString('en', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+      
+      const latest = data.latest_assessment;
+      if (latest) {
+        // Show widgets row
+        document.getElementById('widgets-row').classList.remove('hidden');
+
+        // Populate Condition
+        document.getElementById('widget-condition').textContent = latest.possible_condition;
+        
+        // Populate Severity
+        const badge = document.getElementById('widget-severity-badge');
+        badge.textContent = latest.severity;
+        badge.className = `severity-badge ${latest.severity.toLowerCase()}`;
+        
+        // Populate Summary
+        document.getElementById('widget-summary').textContent = latest.explanation;
+        
+        // Populate Confidence
+        document.getElementById('widget-confidence').textContent = `${latest.confidence_score}%`;
+        document.getElementById('widget-confidence-bar').style.width = `${latest.confidence_score}%`;
+        
+        // Populate Specialist
+        document.getElementById('widget-department').textContent = latest.recommended_doctor;
+        
+        // Populate Symptoms
+        const symptomsContainer = document.getElementById('widget-symptoms');
+        symptomsContainer.innerHTML = latest.symptoms.split(',')
+          .map(s => `<span class="symptom-tag-widget">${s.trim()}</span>`)
+          .join('');
+
+        // Populate Emergency
+        if (latest.emergency_flag) {
+          document.getElementById('dashboard-emergency-card').classList.remove('hidden');
+        }
+      }
     }
   }
 
@@ -60,6 +139,6 @@
     window.location.href = '/login';
   });
 
-  loadProfile();
+  loadDashboard();
 </script>
 {% endblock %}

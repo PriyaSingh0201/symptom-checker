@@ -105,7 +105,7 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
         leftMargin=2 * cm,
         topMargin=1.5 * cm,
         bottomMargin=2 * cm,
-        title="AI Health Assessment Report",
+        title="AI Clinical Intelligence Report",
         author="Symptom Checker",
     )
 
@@ -114,8 +114,8 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
 
     # -- Header banner --------------------------------------------------------
     header_data = [[
-        Paragraph("Symptom Checker", styles["title"]),
-        Paragraph("Health Assessment Report", styles["subtitle"]),
+        Paragraph("Symptom Intelligence Engine", styles["title"]),
+        Paragraph("Clinical Intelligence Report", styles["subtitle"]),
     ]]
     header_table = Table(header_data, colWidths=[10 * cm, 7 * cm])
     header_table.setStyle(TableStyle([
@@ -127,12 +127,12 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
         ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
     ]))
     story.append(header_table)
-    story.append(Spacer(1, 0.5 * cm))
+    story.append(Spacer(1, 0.4 * cm))
 
     # -- Report metadata ------------------------------------------------------
     generated_at = datetime.now().strftime("%d %B %Y, %I:%M %p")
     meta_data = [[
-        "Report ID:", f"ASS-{assessment['id']:04d}",
+        "Report ID:", f"CLN-{assessment['id']:04d}",
         "Generated:", generated_at,
     ]]
     meta_table = Table(meta_data, colWidths=[3 * cm, 5.5 * cm, 3 * cm, 5.5 * cm])
@@ -151,71 +151,120 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
     ]))
     story.append(meta_table)
     story.append(Spacer(1, 0.4 * cm))
+
+    # -- Emergency Banner ----------------------------------------------------
+    if assessment.get("emergency_flag"):
+        emerg_text = (
+            "<b>🚨 EMERGENCY ALERT: IMMEDIATE MEDICAL ATTENTION RECOMMENDED</b><br/>"
+            "This consultation matches clinical emergency indicators. Home care is bypassed. "
+            "Seek immediate care or call local emergency services."
+        )
+        urgency_style = ParagraphStyle(
+            "UrgencyStyle",
+            fontSize=10,
+            fontName="Helvetica-Bold",
+            textColor=RED,
+            leading=14
+        )
+        emerg_table = Table([[Paragraph(emerg_text, urgency_style)]], colWidths=[17 * cm])
+        emerg_table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#FEE2E2")),
+            ("BOX", (0, 0), (-1, -1), 1.5, RED),
+            ("TOPPADDING", (0, 0), (-1, -1), 12),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
+            ("LEFTPADDING", (0, 0), (-1, -1), 12),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 12),
+        ]))
+        story.append(emerg_table)
+        story.append(Spacer(1, 0.4 * cm))
+
     story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
 
     # -- Patient Information --------------------------------------------------
     story.append(Paragraph("Patient Information", styles["section_header"]))
 
+    style_body = styles["body"]
+    style_label = styles["label"]
+
     patient_data = [
-        ["Full Name",         user["fullname"],                              "Email",           user["email"]],
-        ["Age",               str(assessment["age"]),                        "Gender",          assessment["gender"].capitalize()],
-        ["Symptom Duration",  assessment["duration"],                        "Assessment Date", assessment["created_date"]],
-        ["Existing Conditions", assessment["medical_conditions"] or "None", "Assessment Time", assessment["created_time"]],
+        [Paragraph("Full Name", style_label), Paragraph(user["fullname"], style_body),
+         Paragraph("Email", style_label), Paragraph(user["email"], style_body)],
+         
+        [Paragraph("Age", style_label), Paragraph(str(assessment["age"]), style_body),
+         Paragraph("Gender", style_label), Paragraph(assessment["gender"].capitalize(), style_body)],
+         
+        [Paragraph("Symptom Duration", style_label), Paragraph(assessment["duration"], style_body),
+         Paragraph("Assessment Date", style_label), Paragraph(assessment["created_date"], style_body)],
+         
+        [Paragraph("Height / Weight", style_label), Paragraph(f"{assessment.get('height') or 'N/A'} / {assessment.get('weight') or 'N/A'}", style_body),
+         Paragraph("Blood Pressure", style_label), Paragraph(assessment.get("blood_pressure") or "N/A", style_body)],
+         
+        [Paragraph("Temp / Pain Level", style_label), Paragraph(f"{assessment.get('body_temperature')}°F / Pain: {assessment.get('pain_level')}/10", style_body),
+         Paragraph("Pregnancy Status", style_label), Paragraph(assessment.get("pregnancy_status") or "N/A", style_body)],
+         
+        [Paragraph("Medications", style_label), Paragraph(assessment.get("medications") or "None", style_body),
+         Paragraph("Allergies", style_label), Paragraph(assessment.get("allergies") or "None", style_body)],
+         
+        [Paragraph("Existing Conditions", style_label), Paragraph(assessment["medical_conditions"] or "None", style_body),
+         Paragraph("Smoking / Alcohol", style_label), Paragraph(f"{assessment.get('smoking_status') or 'N/A'} / {assessment.get('alcohol_consumption') or 'N/A'}", style_body)]
     ]
+
     patient_table = Table(patient_data, colWidths=[4 * cm, 4.5 * cm, 4 * cm, 4.5 * cm])
     patient_table.setStyle(TableStyle([
-        ("FONTNAME",  (0, 0), (0, -1), "Helvetica-Bold"),
-        ("FONTNAME",  (2, 0), (2, -1), "Helvetica-Bold"),
-        ("FONTSIZE",  (0, 0), (-1, -1), 10),
-        ("TEXTCOLOR", (0, 0), (0, -1), GREY),
-        ("TEXTCOLOR", (2, 0), (2, -1), GREY),
-        ("TEXTCOLOR", (1, 0), (1, -1), DARK),
-        ("TEXTCOLOR", (3, 0), (3, -1), DARK),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
         ("ROWBACKGROUNDS", (0, 0), (-1, -1), [LIGHT_PINK, WHITE]),
-        ("TOPPADDING",    (0, 0), (-1, -1), 9),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 9),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 10),
+        ("TOPPADDING",    (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+        ("LEFTPADDING",   (0, 0), (-1, -1), 8),
         ("GRID", (0, 0), (-1, -1), 0.5, PINK_BORDER),
     ]))
     story.append(patient_table)
+    story.append(Spacer(1, 0.4 * cm))
 
     # -- Reported Symptoms ----------------------------------------------------
-    story.append(Paragraph("Reported Symptoms", styles["section_header"]))
+    story.append(Paragraph("Primary & Secondary Symptoms", styles["section_header"]))
     story.append(Paragraph(assessment["symptoms"], styles["body"]))
-    story.append(Spacer(1, 0.3 * cm))
-
-    # -- AI Analysis Results --------------------------------------------------
-    story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
-    story.append(Paragraph("AI Analysis Results", styles["section_header"]))
-
-    sev_color = _severity_color(assessment["severity"])
-    condition_data = [[
-        Paragraph(f"Possible Condition: {assessment['possible_condition']}", styles["condition"]),
-        Paragraph(
-            f"<b>{assessment['severity'].upper()}</b>",
-            ParagraphStyle("SevBadge", fontSize=12, fontName="Helvetica-Bold",
-                           textColor=WHITE, alignment=TA_CENTER),
-        ),
-    ]]
-    cond_table = Table(condition_data, colWidths=[12 * cm, 5 * cm])
-    cond_table.setStyle(TableStyle([
-        ("BACKGROUND", (0, 0), (0, 0), LIGHT_PINK),
-        ("BACKGROUND", (1, 0), (1, 0), sev_color),
-        ("TOPPADDING",    (0, 0), (-1, -1), 14),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
-        ("LEFTPADDING",   (0, 0), (-1, -1), 12),
-        ("RIGHTPADDING",  (0, 0), (-1, -1), 12),
-        ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
-        ("BOX",           (0, 0), (-1, -1), 1, PINK_BORDER),
-    ]))
-    story.append(cond_table)
     story.append(Spacer(1, 0.4 * cm))
-    story.append(Paragraph("Explanation:", styles["label"]))
+
+    # -- Suspected Clinical Conditions (Top 3) --------------------------------
+    story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
+    story.append(Paragraph("Clinical Analysis & Sussed Conditions", styles["section_header"]))
+
+    conds_table_data = [[
+        Paragraph("<b>Suspected Condition</b>", style_label),
+        Paragraph("<b>Confidence</b>", style_label),
+        Paragraph("<b>Severity</b>", style_label),
+        Paragraph("<b>Department</b>", style_label)
+    ]]
+    
+    for c in assessment.get("top_conditions", []):
+        sev_col = _severity_color(c["severity"])
+        conds_table_data.append([
+            Paragraph(f"<b>{c['condition']}</b>", style_body),
+            Paragraph(f"{c['confidence']}%", style_body),
+            Paragraph(f"<font color='{sev_col}'><b>{c['severity']}</b></font>", style_body),
+            Paragraph(c.get('recommended_department', 'General Physician'), style_body)
+        ])
+        
+    conds_table = Table(conds_table_data, colWidths=[6.5 * cm, 3 * cm, 3.5 * cm, 4 * cm])
+    conds_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), LIGHT_PINK),
+        ("TOPPADDING", (0, 0), (-1, -1), 8),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ("LEFTPADDING", (0, 0), (-1, -1), 10),
+        ("GRID", (0, 0), (-1, -1), 0.5, PINK_BORDER),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+    ]))
+    story.append(conds_table)
+    story.append(Spacer(1, 0.4 * cm))
+
+    # Primary suspection detailed text
+    story.append(Paragraph("Primary suspection details:", styles["label"]))
     story.append(Spacer(1, 0.1 * cm))
     story.append(Paragraph(assessment["explanation"], styles["body"]))
+    story.append(Spacer(1, 0.4 * cm))
 
     # -- Recommended Specialist -----------------------------------------------
-    story.append(Spacer(1, 0.4 * cm))
     story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
     story.append(Paragraph("Recommended Specialist", styles["section_header"]))
 
@@ -228,24 +277,46 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
     doc_table = Table(doctor_data, colWidths=[4 * cm, 13 * cm])
     doc_table.setStyle(TableStyle([
         ("BACKGROUND",    (0, 0), (-1, -1), LIGHT_PINK),
-        ("TOPPADDING",    (0, 0), (-1, -1), 14),
-        ("BOTTOMPADDING", (0, 0), (-1, -1), 14),
+        ("TOPPADDING",    (0, 0), (-1, -1), 12),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 12),
         ("LEFTPADDING",   (0, 0), (-1, -1), 14),
         ("VALIGN",        (0, 0), (-1, -1), "MIDDLE"),
         ("BOX",           (0, 0), (-1, -1), 1, PINK_BORDER),
     ]))
     story.append(doc_table)
+    story.append(Spacer(1, 0.4 * cm))
 
     # -- Health Advice --------------------------------------------------------
-    story.append(Spacer(1, 0.4 * cm))
     story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
-    story.append(Paragraph("Health Advice", styles["section_header"]))
+    story.append(Paragraph("Safe Home Care & Medical Guidance", styles["section_header"]))
 
     for line in assessment["health_advice"].split("\n"):
         line = line.strip()
         if line and not line.startswith("⚠"):
             story.append(Paragraph(line, styles["body"]))
             story.append(Spacer(1, 0.1 * cm))
+
+    # -- Medical Evidence Reference Sources -----------------------------------
+    sources = assessment.get("evidence_sources", [])
+    if sources:
+        story.append(Spacer(1, 0.4 * cm))
+        story.append(HRFlowable(width="100%", thickness=1, color=PINK_BORDER))
+        story.append(Paragraph("Clinical Evidence & Grounded Sources", styles["section_header"]))
+        
+        for ev in sources:
+            source_title = ev.get("source", "Reference")
+            title_text = ev.get("title", "")
+            url = ev.get("url", "")
+            summary = ev.get("summary", "")
+            
+            ref_para = f"<b>{source_title}: {title_text}</b>"
+            if url:
+                ref_para += f" (Link: <font color='blue'><u><a href='{url}'>{url}</a></u></font>)"
+            
+            story.append(Paragraph(ref_para, ParagraphStyle("RefTitle", fontSize=9, fontName="Helvetica", leading=12, textColor=DARK)))
+            if summary:
+                story.append(Paragraph(summary, ParagraphStyle("RefSummary", fontSize=8, fontName="Helvetica-Oblique", leading=11, textColor=GREY)))
+            story.append(Spacer(1, 0.15 * cm))
 
     # -- Disclaimer -----------------------------------------------------------
     story.append(Spacer(1, 0.5 * cm))
@@ -272,7 +343,7 @@ def generate_pdf(assessment: dict, user: dict) -> bytes:
     story.append(Spacer(1, 0.5 * cm))
     footer_table = Table([[
         Paragraph(
-            f"Generated by Symptom Checker  |  {generated_at}  |  Not for clinical use",
+            f"Generated by Clinical Intelligence Engine  |  {generated_at}  |  Not for clinical use",
             ParagraphStyle("Footer", fontSize=8, fontName="Helvetica",
                            textColor=GREY, alignment=TA_CENTER),
         )

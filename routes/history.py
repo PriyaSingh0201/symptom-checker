@@ -73,10 +73,14 @@ def get_history(current_user):
 @history_bp.route("/api/history/<int:assessment_id>", methods=["GET"])
 @token_required
 def get_assessment(current_user, assessment_id):
-    """GET /api/history/<id> – Retrieve a single assessment."""
+    """GET /api/history/<id> – Retrieve a single assessment and load into memory."""
     assessment = Assessment.query.filter_by(
         id=assessment_id, user_id=current_user.id
     ).first_or_404()
+    
+    from utils.conversation_memory import store_consultation
+    store_consultation(assessment.to_dict())
+    
     return jsonify(assessment.to_dict()), 200
 
 

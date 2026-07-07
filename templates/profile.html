@@ -31,10 +31,36 @@
     const response = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } });
     const data = await response.json();
     document.getElementById('profile-card').innerHTML = `
-      <p><strong>Name:</strong> ${data.fullname}</p>
-      <p><strong>Email:</strong> ${data.email}</p>
-      <p><strong>Joined:</strong> ${data.created_at}</p>
-      <p><strong>Total Assessments:</strong> ${data.total_assessments}</p>
+      <div class="profile-details-grid" style="display:grid; grid-template-columns: 1fr 1fr; gap: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1.5rem; margin-bottom: 1.5rem;">
+        <div>
+          <p style="margin: 0.25rem 0;"><strong>Name:</strong> ${data.fullname}</p>
+          <p style="margin: 0.25rem 0;"><strong>Email:</strong> ${data.email}</p>
+        </div>
+        <div>
+          <p style="margin: 0.25rem 0;"><strong>Member Since:</strong> ${data.member_since}</p>
+        </div>
+      </div>
+      
+      <div class="profile-stats-grid" style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap:1rem;">
+        <div class="stat-card" style="padding:1.25rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-card);">
+          <p class="eyebrow" style="margin:0; font-size:0.75rem; color:var(--text-muted);">TOTAL ASSESSMENTS</p>
+          <h3 style="font-size:2.2rem; margin:0.5rem 0 0 0; color:var(--primary); font-weight:700;">${data.total_assessments}</h3>
+        </div>
+        <div class="stat-card" style="padding:1.25rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-card);">
+          <p class="eyebrow" style="margin:0; font-size:0.75rem; color:var(--text-muted);">MOST COMMON SYMPTOMS</p>
+          <h3 style="font-size:1.05rem; margin:0.5rem 0 0 0; font-weight:600; line-height:1.4; color:var(--text-dark);">${data.common_symptoms}</h3>
+        </div>
+        <div class="stat-card" style="padding:1.25rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-card);">
+          <p class="eyebrow" style="margin:0; font-size:0.75rem; color:var(--text-muted);">AVERAGE SEVERITY</p>
+          <div style="margin-top: 0.6rem;">
+            <span class="severity-badge ${data.avg_severity.toLowerCase()}">${data.avg_severity}</span>
+          </div>
+        </div>
+        <div class="stat-card" style="padding:1.25rem; border:1px solid var(--border-color); border-radius:12px; background:var(--bg-card);">
+          <p class="eyebrow" style="margin:0; font-size:0.75rem; color:var(--text-muted);">LAST CONSULTATION</p>
+          <h3 style="font-size:0.9rem; margin:0.5rem 0 0 0; line-height:1.4; color:var(--text-muted); font-weight:500;">${data.last_consultation}</h3>
+        </div>
+      </div>
     `;
   }
 

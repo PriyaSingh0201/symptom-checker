@@ -54,23 +54,47 @@
       return;
     }
 
-    list.innerHTML = data.assessments.map(item => `
-      <article class="history-item">
-        <div class="history-top">
-          <strong>${item.possible_condition}</strong>
+    list.innerHTML = data.assessments.map(item => {
+      const top3 = (item.top_conditions || [])
+        .map(c => `${c.condition} (${c.confidence}%)`)
+        .join(', ');
+        
+      const emergencyBadge = item.emergency_flag 
+        ? `<span class="severity-badge severe" style="margin-left: 0.5rem; background:#EF4444; color:white;">🚨 Emergency</span>`
+        : '';
+        
+      return `
+      <article class="history-item" style="border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 1rem; background: var(--bg-card);">
+        <div class="history-top" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.5rem;">
+          <div>
+            <strong style="font-size:1.15rem; color:var(--text-dark);">${item.possible_condition} (${item.confidence_score}%)</strong>
+            ${emergencyBadge}
+          </div>
           <span class="severity-badge ${item.severity.toLowerCase()}">${item.severity}</span>
         </div>
-        <p>${item.symptoms}</p>
-        <div class="history-meta">
-          <span>${item.created_date}</span>
-          <span>${item.recommended_doctor}</span>
+        <p style="margin: 0.5rem 0; font-size:0.9rem; line-height:1.4;"><strong>Symptoms:</strong> ${item.symptoms}</p>
+        ${top3 ? `<p style="margin: 0.25rem 0; font-size:0.85rem; color:var(--text-muted);"><strong>Differential Suspicions:</strong> ${top3}</p>` : ''}
+        <div class="history-meta" style="font-size:0.75rem; color:var(--text-muted); display:flex; gap:1.5rem; margin-top:0.75rem;">
+          <span>📅 ${item.created_date} at ${item.created_time}</span>
+          <span>🩺 Department: ${item.recommended_doctor}</span>
+          <span>🆔 ID: ${item.consultation_id || 'N/A'}</span>
         </div>
-        <div class="history-actions">
+        <div class="history-actions" style="margin-top: 1rem; display:flex; gap:0.5rem; border-top: 1px solid var(--border-color); padding-top:0.75rem;">
           <a class="ghost-btn" href="/api/download-pdf/${item.id}" target="_blank">Download PDF</a>
-          <button class="secondary-btn" type="button" data-id="${item.id}">Delete</button>
+          <button class="primary-btn reopen-btn" type="button" data-reopen="${item.id}">Reopen Consultation</button>
+          <button class="secondary-btn delete-btn" type="button" data-id="${item.id}" style="margin-left:auto;">Delete</button>
         </div>
       </article>
-    `).join('');
+      `;
+    }).join('');
+
+    list.querySelectorAll('button[data-reopen]').forEach(button => {
+      button.addEventListener('click', () => {
+        const id = button.getAttribute('data-reopen');
+        localStorage.setItem('reopen_assessment_id', id);
+        window.location.href = '/assessment';
+      });
+    });
 
     list.querySelectorAll('button[data-id]').forEach(button => {
       button.addEventListener('click', async () => {
