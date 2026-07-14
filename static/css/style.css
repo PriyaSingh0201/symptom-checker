@@ -1011,3 +1011,181 @@ html[data-theme='dark'] .error-page {
   .followup-question-item { flex-direction: column; align-items: flex-start; }
   .progress-container-outer { flex-direction: column; align-items: flex-start; }
 }
+
+/* ══════════════════════════════════════════════════════════════════════════════
+   Phase 3 — Smart Consultation & Triage Styles
+══════════════════════════════════════════════════════════════════════════════ */
+
+/* Consultation progress */
+.consult-progress-wrap { margin-bottom: 1rem; }
+.consult-progress-label { display: flex; justify-content: space-between; font-size: 0.82rem; font-weight: 600; color: var(--muted); margin-bottom: 0.4rem; }
+
+/* Consultation chat window */
+.consult-chat-window {
+  min-height: 320px;
+  max-height: 420px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--surface-soft);
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  scroll-behavior: smooth;
+}
+.consult-chat-window::-webkit-scrollbar { width: 4px; }
+.consult-chat-window::-webkit-scrollbar-thumb { background: #FECDD3; border-radius: 4px; }
+
+/* Consultation input area */
+.consult-input-area { display: flex; flex-direction: column; gap: 0.6rem; }
+.consult-input-row { display: flex; gap: 0.5rem; align-items: center; }
+.consult-input-row input { flex: 1; }
+.consult-quick-answers { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+
+/* Result header */
+.consult-result-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  padding: 1.25rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+html[data-theme='dark'] .consult-result-header { background: #1F2937; border-color: #374151; }
+
+/* Specialist card */
+.specialist-card {
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  background: linear-gradient(135deg, #FFF0F5, #FFFFFF);
+  border: 1px solid #FECDD3;
+  border-radius: 14px;
+  padding: 1.25rem;
+  margin: 1rem 0;
+}
+html[data-theme='dark'] .specialist-card { background: #1F2937; border-color: #374151; }
+.specialist-icon-wrap { font-size: 2.5rem; flex-shrink: 0; }
+.specialist-name { font-size: 1.3rem; font-weight: 800; color: var(--primary); margin: 0.25rem 0; }
+.specialist-reason { font-size: 0.85rem; color: var(--muted); margin: 0 0 0.5rem; line-height: 1.5; }
+
+/* Top 5 conditions box */
+.top5-box {
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+}
+html[data-theme='dark'] .top5-box { background: #1F2937; border-color: #374151; }
+.top5-box h3 { margin: 0 0 1rem; font-size: 1rem; font-weight: 700; }
+
+.top5-condition-card {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 0.75rem;
+  transition: box-shadow 0.15s;
+}
+.top5-condition-card:hover { box-shadow: 0 4px 16px rgba(224,41,90,0.1); border-color: #FECDD3; }
+html[data-theme='dark'] .top5-condition-card { background: #374151; border-color: #4B5563; }
+
+.top5-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.25rem;
+}
+.top5-rank {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--gradient-primary);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.top5-name { font-size: 1rem; font-weight: 700; flex: 1; }
+.top5-prob { font-size: 1rem; font-weight: 800; color: var(--primary); margin-left: auto; }
+
+/* Consultation timeline box */
+.consult-timeline-box {
+  margin: 1.25rem 0;
+  padding: 1.25rem;
+  background: #F9FAFB;
+  border: 1px solid #E5E7EB;
+  border-radius: 14px;
+}
+html[data-theme='dark'] .consult-timeline-box { background: #1F2937; border-color: #374151; }
+.consult-timeline-box h3 { margin: 0 0 1rem; font-size: 1rem; font-weight: 700; }
+
+/* Health Timeline page */
+.tl-card {
+  display: flex;
+  gap: 0;
+  margin-bottom: 0.5rem;
+}
+.tl-card-emergency { border-left: 3px solid #EF4444; border-radius: 0 12px 12px 0; }
+.tl-card-left {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 28px;
+  flex-shrink: 0;
+  padding-top: 0.5rem;
+}
+.tl-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  border: 2px solid white;
+  box-shadow: 0 0 0 2px var(--primary);
+}
+.tl-dot.mild { background: #22c55e; box-shadow: 0 0 0 2px #22c55e; }
+.tl-dot.moderate { background: #f59e0b; box-shadow: 0 0 0 2px #f59e0b; }
+.tl-dot.severe { background: #ef4444; box-shadow: 0 0 0 2px #ef4444; }
+.tl-line { flex: 1; width: 2px; background: #E5E7EB; margin: 4px 0; min-height: 20px; }
+.tl-card-body {
+  flex: 1;
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  padding: 1rem;
+  margin-left: 0.75rem;
+  margin-bottom: 0.5rem;
+  transition: box-shadow 0.15s;
+}
+.tl-card-body:hover { box-shadow: 0 4px 16px rgba(224,41,90,0.08); border-color: #FECDD3; }
+html[data-theme='dark'] .tl-card-body { background: #1F2937; border-color: #374151; }
+.tl-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.4rem; flex-wrap: wrap; gap: 0.4rem; }
+.tl-date { font-size: 0.78rem; color: var(--muted); font-weight: 600; }
+.tl-emergency-badge { background: #FEE2E2; color: #B91C1C; border-radius: 999px; padding: 0.15rem 0.6rem; font-size: 0.72rem; font-weight: 700; }
+.tl-condition { font-size: 1rem; font-weight: 700; margin: 0 0 0.25rem; }
+.tl-symptoms { font-size: 0.82rem; color: var(--muted); margin: 0 0 0.5rem; line-height: 1.4; }
+.tl-card-footer { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.5rem; }
+.tl-specialist { font-size: 0.82rem; font-weight: 600; color: var(--primary); }
+.tl-confidence { display: flex; align-items: center; gap: 0.25rem; }
+
+/* Dark mode for timeline */
+html[data-theme='dark'] .tl-line { background: #374151; }
+
+/* Responsive Phase 3 */
+@media (max-width: 700px) {
+  .consult-result-header { flex-direction: column; }
+  .specialist-card { flex-direction: column; }
+  .top5-header { flex-wrap: wrap; }
+  .tl-card-footer { flex-direction: column; align-items: flex-start; }
+}

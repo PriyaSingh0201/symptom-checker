@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+{% block title %}Book Appointment{% endblock %}
+
+{% block content %}
+<section class="page-card" style="max-width:700px;margin:0 auto;">
+  <div class="section-heading">
+    <p class="eyebrow">Specialist Consultation</p>
+    <h1 data-i18n="appointmentTitle">Book an Appointment</h1>
+    <p>Schedule a consultation with a recommended specialist based on your AI assessment.</p>
+  </div>
+
+  <div id="booking-success" class="hidden" style="background:#F0FDF4;border:1px solid #86EFAC;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;text-align:center;">
+    <div style="font-size:2.5rem;margin-bottom:0.5rem;">✅</div>
+    <h3 style="color:#166534;margin:0 0 0.5rem;">Appointment Booked!</h3>
+    <p id="booking-success-msg" style="color:#166534;margin:0;"></p>
+    <p id="booking-ref" style="font-weight:700;color:#166534;margin-top:0.5rem;font-size:1.1rem;"></p>
+  </div>
+
+  <form id="appointment-form" class="assessment-form">
+    <div class="form-grid">
+      <div>
+        <div class="field-label">Specialist Type <span class="required">*</span></div>
+        <select id="appt-specialist" name="specialist" required>
+          <option value="">Select Specialist</option>
+          <option value="General Physician">General Physician</option>
+          <option value="Cardiologist">Cardiologist</option>
+          <option value="Neurologist">Neurologist</option>
+          <option value="Dermatologist">Dermatologist</option>
+          <option value="Pulmonologist">Pulmonologist</option>
+          <option value="Orthopedic">Orthopedic</option>
+          <option value="ENT Specialist">ENT Specialist</option>
+          <option value="Gynecologist">Gynecologist</option>
+          <option value="Gastroenterologist">Gastroenterologist</option>
+          <option value="Ophthalmologist">Ophthalmologist</option>
+          <option value="Psychiatrist">Psychiatrist</option>
+          <option value="Endocrinologist">Endocrinologist</option>
+        </select>
+      </div>
+      <div>
+        <div class="field-label">Preferred Hospital / Clinic</div>
+        <input type="text" id="appt-hospital" name="hospital" placeholder="e.g. City Medical Center" />
+      </div>
+      <div>
+        <div class="field-label">Preferred Date <span class="required">*</span></div>
+        <input type="date" id="appt-date" name="date" required />
+      </div>
+      <div>
+        <div class="field-label">Preferred Time <span class="required">*</span></div>
+        <select id="appt-time" name="time" required>
+          <option value="">Select Time</option>
+          <option value="09:00 AM">09:00 AM</option>
+          <option value="10:00 AM">10:00 AM</option>
+          <option value="11:00 AM">11:00 AM</option>
+          <option value="12:00 PM">12:00 PM</option>
+          <option value="02:00 PM">02:00 PM</option>
+          <option value="03:00 PM">03:00 PM</option>
+          <option value="04:00 PM">04:00 PM</option>
+          <option value="05:00 PM">05:00 PM</option>
+        </select>
+      </div>
+      <div class="grid-span-all">
+        <div class="field-label">Reason for Visit</div>
+        <textarea id="appt-reason" name="reason" rows="2" placeholder="Brief description of your concern..."></textarea>
+      </div>
+    </div>
+
+    <div style="margin-top:0.5rem;padding:0.75rem;background:#FFF0F5;border:1px solid #FECDD3;border-radius:10px;font-size:0.82rem;color:var(--muted);">
+      ℹ️ This is a demonstration booking system. In production, this integrates with your hospital's scheduling API.
+    </div>
+
+    <button type="submit" class="primary-btn" style="margin-top:1.5rem;width:100%;">
+      Confirm Appointment
+    </button>
+  </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Set minimum date to today
+document.getElementById('appt-date').min = new Date().toISOString().split('T')[0];
+
+// Pre-fill specialist from URL param
+const params = new URLSearchParams(window.location.search);
+if (params.get('specialist')) {
+  const sel = document.getElementById('appt-specialist');
+  for (let opt of sel.options) {
+    if (opt.value === params.get('specialist')) { opt.selected = true; break; }
+  }
+}
+
+document.getElementById('appointment-form').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const token = localStorage.getItem('token') || localStorage.getItem('jwt_token');
+  const btn = e.target.querySelector('button[type="submit"]');
+  btn.disabled = true;
+  btn.textContent = 'Booking...';
+
+  const payload = {
+    specialist: document.getElementById('appt-specialist').value,
+    hospital: document.getElementById('appt-hospital').value || 'Nearest Hospital',
+    date: document.getElementById('appt-date').value,
+    time: document.getElementById('appt-time').value,
+  };
+
+  try {
+    const res = await fetch('/api/appointment/book', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+      body: JSON.stringify(payload)
+    });
+    const data = await res.json();
+    if (data.success) {
+      document.getElementById('appointment-form').classList.add('hidden');
+      document.getElementById('booking-success').classList.remove('hidden');
+      document.getElementById('booking-success-msg').textContent = data.message;
+      document.getElementById('booking-ref').textContent = 'Booking Reference: ' + data.booking_ref;
+    } else {
+      alert(data.error || 'Booking failed. Please try again.');
+      btn.disabled = false;
+      btn.textContent = 'Confirm Appointment';
+    }
+  } catch (err) {
+    alert('Network error. Please try again.');
+    btn.disabled = false;
+    btn.textContent = 'Confirm Appointment';
+  }
+});
+</script>
+{% endblock %}

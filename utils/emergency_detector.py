@@ -30,7 +30,7 @@ EMERGENCY_CRITERIA = [
             r"(weakness|numbness)\s*on\s*one\s*side", 
             r"stroke\s*symptom",
             r"sudden\s*paralysis",
-            r"loss\s*of\s*speech",
+                        r"loss\s*of\s*speech",
             r"aphasia"
         ],
         "co_keywords": [],
@@ -60,6 +60,18 @@ EMERGENCY_CRITERIA = [
         ],
         "co_keywords": [],
         "message": "Anaphylaxis (severe allergic reaction with throat/tongue swelling or breathing difficulty) is a medical emergency that can block the airway."
+    },
+    {
+        "name": "High Fever with Seizures",
+        "keywords": [r"fever", r"temperature", r"high\s*temp", r"hyperthermia"],
+        "co_keywords": [r"seizure", r"convulsion", r"fit", r"spasm", r"shak(ing|e)"],
+        "message": "High fever combined with seizures or convulsions indicates a neurological emergency requiring immediate medical intervention."
+    },
+    {
+        "name": "Uncontrolled Bleeding",
+        "keywords": [r"bleed", r"blood", r"hemorrhage"],
+        "co_keywords": [r"uncontrolled", r"heavy", r"cannot\s*stop", r"severe", r"gush", r"pour"],
+        "message": "Uncontrolled or severe bleeding requires immediate emergency pressure and surgical/medical intervention."
     }
 ]
 

@@ -7,6 +7,7 @@ import os
 import json
 import re
 import logging
+from utils.knowledge_base import retrieve_medical_evidence, NO_EVIDENCE_MESSAGE
 
 logger = logging.getLogger(__name__)
 
@@ -489,9 +490,11 @@ def _rule_based_analysis(symptoms: str, age: int, gender: str,
 # ─────────────────────────────────────────────────────────────────────────────
 
 def _gemini_analysis(symptoms: str, age: int, gender: str,
-                     duration: str, conditions: str) -> dict | None:
+                     duration: str, conditions: str,
+                     evidence: list | None = None) -> dict | None:
     """
     Call Google Gemini API with a structured medical prompt.
+    Includes retrieved medical evidence as grounding context.
     Returns parsed dict on success, None on failure.
     """
     api_key = os.environ.get("GEMINI_API_KEY", "").strip()
@@ -504,6 +507,15 @@ def _gemini_analysis(symptoms: str, age: int, gender: str,
         genai.configure(api_key=api_key)
         model = genai.GenerativeModel("gemini-1.5-flash")
 
+        # Build evidence context block
+        ev_block = ""
+        if evidence:
+            valid_ev = [e for e in evidence if e.get("source") != "System"]
+            if valid_ev:
+                ev_block = "\n\nRetrieved Medical Evidence:\n"
+                for i, ev in enumerate(valid_ev):
+                    ev_block += f"[{i+1}] {ev['source']} — {ev['title']}\n    {ev['summary']}\n"
+
         prompt = f"""You are a medical AI assistant. Analyze the following patient symptoms and provide a structured health assessment.
 
 Patient Information:
@@ -512,7 +524,7 @@ Patient Information:
 - Symptom Duration: {duration}
 - Primary Symptoms: {symptoms}
 - Existing Medical Conditions: {conditions if conditions else "None"}
-
+{ev_block}
 Respond ONLY with a valid JSON object in this exact format (no markdown, no extra text):
 {{
   "possible_condition": "<specific medical condition name>",
@@ -568,23 +580,28 @@ def analyze_symptoms(symptoms: str, age: int, gender: str,
                      duration: str, conditions: str) -> dict:
     """
     Analyze patient symptoms and return a structured assessment.
-
-    Tries Gemini API first; if unavailable or erroring, falls back to
-    the comprehensive rule-based knowledge engine.
-
-    Returns:
-        dict with keys:
-            possible_condition, explanation, severity,
-            recommended_doctor, health_advice
+    Retrieves medical evidence first, then passes it to Gemini or rule-based engine.
     """
-    # 1. Try Gemini
-    result = _gemini_analysis(symptoms, age, gender, duration, conditions)
+    # 1. Retrieve medical evidence from trusted sources
+    primary = symptoms.split(",")[0].strip()
+    evidence = retrieve_medical_evidence(primary_symptom=primary, secondary_symptoms=symptoms)
 
-    # 2. Fall back to rule-based
+    # 2. Try Gemini with evidence context
+    result = _gemini_analysis(symptoms, age, gender, duration, conditions, evidence)
+
+    # 3. Fall back to rule-based
     if result is None:
         result = _rule_based_analysis(symptoms, age, gender, duration, conditions)
 
-    # 3. Always append disclaimer
+    # 4. Attach evidence sources to result
+    result["evidence_sources"] = evidence
+
+    # 5. Surface fallback message if no real evidence was found
+    valid_evidence = [e for e in evidence if e.get("source") != "System"]
+    if not valid_evidence:
+        result["evidence_note"] = NO_EVIDENCE_MESSAGE
+
+    # 6. Always append disclaimer
     disclaimer = (
         "\n\n⚠ DISCLAIMER: This assessment is AI-generated and is NOT a medical diagnosis. "
         "Please consult a qualified doctor for professional medical advice."

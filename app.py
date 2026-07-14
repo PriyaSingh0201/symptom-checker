@@ -4,6 +4,7 @@ from datetime import datetime
 from pathlib import Path
 
 from flask import Flask, jsonify, redirect, render_template, request, session
+from sqlalchemy import inspect, text
 
 from database import db
 from routes.auth import auth_bp
@@ -13,6 +14,7 @@ from routes.pdf import pdf_bp
 from routes.profile import profile_bp
 from routes.symptom import symptom_bp
 from routes.chat import chat_bp
+from routes.consultation import consultation_bp
 
 
 BASE_DIR = Path(__file__).resolve().parent
@@ -20,6 +22,53 @@ INSTANCE_DIR = BASE_DIR / "instance"
 UPLOAD_DIR = BASE_DIR / "uploads"
 INSTANCE_DIR.mkdir(exist_ok=True)
 UPLOAD_DIR.mkdir(exist_ok=True)
+
+
+def _ensure_assessment_columns(app: Flask) -> None:
+    with app.app_context():
+        if not inspect(db.engine).has_table("assessments"):
+            return
+
+        existing_cols = {col["name"] for col in inspect(db.engine).get_columns("assessments")}
+        required_columns = {
+            "weight": "VARCHAR(50)",
+            "height": "VARCHAR(50)",
+            "pain_level": "INTEGER",
+            "allergies": "TEXT",
+            "medications": "TEXT",
+            "primary_symptom": "VARCHAR(255)",
+            "secondary_symptoms": "TEXT",
+            "smoking_status": "VARCHAR(50)",
+            "alcohol_consumption": "VARCHAR(50)",
+            "body_temperature": "FLOAT",
+            "blood_pressure": "VARCHAR(50)",
+            "pregnancy_status": "VARCHAR(50)",
+            "confidence_score": "FLOAT",
+            "top_conditions": "TEXT",
+            "evidence_sources": "TEXT",
+            "emergency_flag": "BOOLEAN",
+            "consultation_id": "VARCHAR(100)",
+            "followup_responses": "TEXT",
+            "followup_questions": "TEXT",
+            "conversation_history": "TEXT",
+            "follow_up_questions": "TEXT",
+            "follow_up_answers": "TEXT",
+            "top5_conditions": "TEXT",
+            "probability_scores": "TEXT",
+            "recommended_specialist": "TEXT",
+            "medical_references": "TEXT",
+            "consultation_timestamp": "TIMESTAMP",
+        }
+
+        for column_name, column_type in required_columns.items():
+            if column_name in existing_cols:
+                continue
+            try:
+                db.session.execute(text(f"ALTER TABLE assessments ADD COLUMN {column_name} {column_type}"))
+                db.session.commit()
+            except Exception:
+                db.session.rollback()
+                continue
 
 
 def create_app(test_config=None):
@@ -49,39 +98,7 @@ def create_app(test_config=None):
         from models.user import User  # noqa: F401
 
         db.create_all()
-
-        # Phase 2 Database Migrations
-        from sqlalchemy import inspect
-        inspector = inspect(db.engine)
-        if inspector.has_table("assessments"):
-            existing_cols = {col["name"] for col in inspector.get_columns("assessments")}
-            required_cols = {
-                "weight": "VARCHAR(50)",
-                "height": "VARCHAR(50)",
-                "pain_level": "INTEGER",
-                "allergies": "TEXT",
-                "medications": "TEXT",
-                "primary_symptom": "VARCHAR(255)",
-                "secondary_symptoms": "TEXT",
-                "smoking_status": "VARCHAR(50)",
-                "alcohol_consumption": "VARCHAR(50)",
-                "body_temperature": "FLOAT",
-                "blood_pressure": "VARCHAR(50)",
-                "pregnancy_status": "VARCHAR(50)",
-                "confidence_score": "FLOAT",
-                "top_conditions": "TEXT",
-                "evidence_sources": "TEXT",
-                "emergency_flag": "BOOLEAN",
-                "consultation_id": "VARCHAR(100)",
-                "followup_responses": "TEXT",
-                "followup_questions": "TEXT",
-            }
-            with db.engine.begin() as conn:
-                for col_name, col_type in required_cols.items():
-                    if col_name not in existing_cols:
-                        default_val = " DEFAULT 0" if col_name == "emergency_flag" else ""
-                        conn.execute(db.text(f"ALTER TABLE assessments ADD COLUMN {col_name} {col_type}{default_val}"))
-
+        _ensure_assessment_columns(app)
     app.register_blueprint(auth_bp)
     app.register_blueprint(dashboard_bp)
     app.register_blueprint(history_bp)
@@ -89,6 +106,7 @@ def create_app(test_config=None):
     app.register_blueprint(profile_bp)
     app.register_blueprint(symptom_bp)
     app.register_blueprint(chat_bp)
+    app.register_blueprint(consultation_bp)
 
     @app.before_request
     def ensure_csrf_token():

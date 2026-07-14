@@ -48,6 +48,16 @@ class Assessment(db.Model):
     followup_responses = db.Column(db.Text, nullable=True)       # JSON string
     followup_questions = db.Column(db.Text, nullable=True)       # JSON string
 
+    # Phase 3 Interactive Triage & Consultation Fields
+    conversation_history = db.Column(db.Text, nullable=True)     # JSON string
+    follow_up_questions = db.Column(db.Text, nullable=True)      # JSON string
+    follow_up_answers = db.Column(db.Text, nullable=True)        # JSON string
+    top5_conditions = db.Column(db.Text, nullable=True)          # JSON string
+    probability_scores = db.Column(db.Text, nullable=True)       # JSON string
+    recommended_specialist = db.Column(db.Text, nullable=True)
+    medical_references = db.Column(db.Text, nullable=True)       # JSON string
+    consultation_timestamp = db.Column(db.DateTime, nullable=True)
+
     # ── Metadata ─────────────────────────────────────────────────────────────
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc), index=True)
 
@@ -103,6 +113,16 @@ class Assessment(db.Model):
             "followup_responses": safe_json_loads(self.followup_responses, {}),
             "followup_questions": safe_json_loads(self.followup_questions, []),
             
+            # Phase 3 Interactive Triage & Consultation Outputs
+            "conversation_history": safe_json_loads(self.conversation_history, []),
+            "follow_up_questions": safe_json_loads(self.follow_up_questions, []),
+            "follow_up_answers": safe_json_loads(self.follow_up_answers, {}),
+            "top5_conditions": safe_json_loads(self.top5_conditions, []),
+            "probability_scores": safe_json_loads(self.probability_scores, {}),
+            "recommended_specialist": self.recommended_specialist or "",
+            "medical_references": safe_json_loads(self.medical_references, []),
+            "consultation_timestamp": self.consultation_timestamp.strftime("%Y-%m-%d %H:%M:%S") if self.consultation_timestamp else None,
+
             # Metadata
             "created_at": self.created_at.strftime("%Y-%m-%d %H:%M:%S"),
             "created_date": self.created_at.strftime("%d %b %Y"),

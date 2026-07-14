@@ -26,9 +26,11 @@
           <span>Symptom Checker</span>
         </a>
         <nav class="topnav">
-          {% if request.path.startswith('/dashboard') or request.path.startswith('/assessment') or request.path.startswith('/history') or request.path.startswith('/profile') %}
+          {% if request.path.startswith('/dashboard') or request.path.startswith('/assessment') or request.path.startswith('/history') or request.path.startswith('/profile') or request.path.startswith('/consultation') or request.path.startswith('/timeline') or request.path.startswith('/appointment') %}
             <a href="{{ url_for('dashboard.dashboard') }}" data-i18n="dashboard">Dashboard</a>
             <a href="{{ url_for('symptom.assessment_page') }}" data-i18n="checker">Checker</a>
+            <a href="{{ url_for('consultation.consultation_page') }}">Consult</a>
+            <a href="{{ url_for('consultation.timeline_page') }}">Timeline</a>
             <a href="{{ url_for('history.history_page') }}" data-i18n="history">History</a>
             <a href="{{ url_for('profile.profile_page') }}" data-i18n="profile">Profile</a>
             <button id="theme-toggle" class="ghost-btn" type="button">🌙</button>

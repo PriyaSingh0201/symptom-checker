@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+{% block title %}Health Timeline{% endblock %}
+
+{% block content %}
+<section class="page-card" style="max-width:900px;margin:0 auto;">
+  <div class="section-heading">
+    <p class="eyebrow">Your Medical History</p>
+    <h1 data-i18n="timelineTitle">Health Timeline</h1>
+    <p>A chronological view of all your consultations, severity trends, and specialist recommendations.</p>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="widgets-row" id="timeline-stats" style="margin-bottom:1.5rem;">
+    <div class="widget-card">
+      <div class="widget-eyebrow">Total Consultations</div>
+      <div class="widget-stat" id="tl-total">—</div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-eyebrow">Most Recent Condition</div>
+      <div class="widget-title" id="tl-recent">—</div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-eyebrow">Emergency Alerts</div>
+      <div class="widget-stat" id="tl-emergencies" style="color:var(--danger);">—</div>
+    </div>
+    <div class="widget-card">
+      <div class="widget-eyebrow">Last Consultation</div>
+      <div class="widget-title" id="tl-last-date">—</div>
+    </div>
+  </div>
+
+  <!-- Filter -->
+  <div class="history-toolbar" style="margin-bottom:1rem;">
+    <input type="text" id="tl-search" placeholder="Search conditions or symptoms..." style="flex:1;max-width:300px;" />
+    <select id="tl-severity-filter">
+      <option value="">All Severities</option>
+      <option value="Mild">Mild</option>
+      <option value="Moderate">Moderate</option>
+      <option value="Severe">Severe</option>
+    </select>
+  </div>
+
+  <!-- Timeline List -->
+  <div id="timeline-list">
+    <div style="text-align:center;padding:2rem;color:var(--muted);">
+      <div class="chat-typing" style="display:inline-flex;margin-bottom:0.75rem;">
+        <span></span><span></span><span></span>
+      </div>
+      <p>Loading your health timeline...</p>
+    </div>
+  </div>
+
+  <div id="tl-empty" class="hidden" style="text-align:center;padding:3rem;color:var(--muted);">
+    <div style="font-size:3rem;margin-bottom:1rem;">📋</div>
+    <h3>No consultations yet</h3>
+    <p>Start your first AI consultation to see your health timeline here.</p>
+    <a href="/consultation" class="primary-btn" style="display:inline-block;margin-top:1rem;text-decoration:none;">
+      Start Consultation
+    </a>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const token = localStorage.getItem('token') || localStorage.getItem('jwt_token');
+
+async function loadTimeline() {
+  try {
+    const res = await fetch('/api/timeline', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    const data = await res.json();
+    renderTimeline(data.timeline || []);
+  } catch (e) {
+    document.getElementById('timeline-list').innerHTML =
+      '<p style="color:var(--danger);text-align:center;">Failed to load timeline.</p>';
+  }
+}
+
+function renderTimeline(items) {
+  const list = document.getElementById('timeline-list');
+  const empty = document.getElementById('tl-empty');
+
+  if (!items.length) {
+    list.innerHTML = '';
+    empty.classList.remove('hidden');
+    return;
+  }
+
+  // Stats
+  document.getElementById('tl-total').textContent = items.length;
+  document.getElementById('tl-recent').textContent = items[0]?.condition || '—';
+  document.getElementById('tl-emergencies').textContent = items.filter(i => i.emergency).length;
+  document.getElementById('tl-last-date').textContent = items[0]?.date || '—';
+
+  list.innerHTML = items.map((item, idx) => `
+    <div class="tl-card ${item.emergency ? 'tl-card-emergency' : ''}" data-condition="${item.condition.toLowerCase()}" data-symptoms="${item.symptoms.toLowerCase()}" data-severity="${item.severity}">
+      <div class="tl-card-left">
+        <div class="tl-dot ${item.severity.toLowerCase()}"></div>
+        ${idx < items.length - 1 ? '<div class="tl-line"></div>' : ''}
+      </div>
+      <div class="tl-card-body">
+        <div class="tl-card-header">
+          <div>
+            <span class="tl-date">${item.date} · ${item.time}</span>
+            ${item.emergency ? '<span class="tl-emergency-badge">🚨 Emergency</span>' : ''}
+          </div>
+          <span class="severity-badge ${item.severity.toLowerCase()}">${item.severity}</span>
+        </div>
+        <h3 class="tl-condition">${item.condition}</h3>
+        <p class="tl-symptoms">${item.symptoms}</p>
+        <div class="tl-card-footer">
+          <span class="tl-specialist">🩺 ${item.specialist || 'General Physician'}</span>
+          <div class="tl-confidence">
+            <span style="font-size:0.78rem;color:var(--muted);">Confidence:</span>
+            <div class="progress" style="width:80px;height:6px;display:inline-block;vertical-align:middle;margin:0 0.4rem;">
+              <div class="progress-bar" style="width:${item.confidence}%;"></div>
+            </div>
+            <span style="font-size:0.78rem;font-weight:700;color:var(--primary);">${Math.round(item.confidence)}%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// Search & filter
+document.getElementById('tl-search').addEventListener('input', filterTimeline);
+document.getElementById('tl-severity-filter').addEventListener('change', filterTimeline);
+
+function filterTimeline() {
+  const q = document.getElementById('tl-search').value.toLowerCase();
+  const sev = document.getElementById('tl-severity-filter').value;
+  document.querySelectorAll('.tl-card').forEach(card => {
+    const matchQ = !q || card.dataset.condition.includes(q) || card.dataset.symptoms.includes(q);
+    const matchS = !sev || card.dataset.severity === sev;
+    card.style.display = matchQ && matchS ? '' : 'none';
+  });
+}
+
+loadTimeline();
+</script>
+{% endblock %}

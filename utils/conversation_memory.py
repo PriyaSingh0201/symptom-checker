@@ -38,6 +38,13 @@ def store_consultation(assessment_dict: dict) -> None:
         "blood_pressure": assessment_dict.get("blood_pressure"),
         "pregnancy_status": assessment_dict.get("pregnancy_status"),
         "medical_conditions": assessment_dict.get("medical_conditions"),
+        "conversation_history": assessment_dict.get("conversation_history", []),
+        "follow_up_questions": assessment_dict.get("follow_up_questions", assessment_dict.get("followup_questions", [])),
+        "follow_up_answers": assessment_dict.get("follow_up_answers", assessment_dict.get("followup_responses", {})),
+        "top5_conditions": assessment_dict.get("top5_conditions", []),
+        "probability_scores": assessment_dict.get("probability_scores", {}),
+        "recommended_specialist": assessment_dict.get("recommended_specialist", ""),
+        "medical_references": assessment_dict.get("medical_references", []),
         "followup_responses": assessment_dict.get("followup_responses", {}),
         "followup_questions": assessment_dict.get("followup_questions", [])
     }

@@ -1,4 +1,4 @@
-# utils/clinical_engine.py – AI Clinical Reasoning & Decision Support
+
 import os
 import json
 import re
@@ -9,13 +9,12 @@ from utils.confidence_score import calculate_confidence
 
 logger = logging.getLogger(__name__)
 
-# Fallback Clinical Knowledge Base (Top Suspected Conditions)
 FALLBACK_KNOWLEDGE = [
     {
         "keywords": ["fever", "high temperature", "chills", "sweating", "hot", "temperature", "shivering"],
         "condition": "Viral Fever",
         "explanation": "Viral fever is an elevated body temperature caused by a viral infection. It is typical for immune systems fighting rhinovirus or influenza, and usually self-resolves with rest.",
-        "doctor": "General Medicine",
+        "doctor": "General Physician",
         "severity": "Moderate",
         "advice": "• Drink at least 8-10 glasses of water daily.\n• Get plenty of rest and sleep.\n• Sponge forehead with cool, damp cloth.\n• Monitor body temperature every 4 hours.",
         "warning": "Seek immediate help if temperature exceeds 103°F (39.4°C) or is accompanied by confusion.",
@@ -30,7 +29,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["cough", "cold", "runny nose", "sneezing", "sore throat", "nasal congestion", "stuffy nose"],
         "condition": "Common Cold",
         "explanation": "The common cold is a viral upper respiratory infection affecting the nose and throat. It is usually self-limiting and clears within 7 to 10 days.",
-        "doctor": "General Medicine",
+        "doctor": "General Physician",
         "severity": "Mild",
         "advice": "• Stay hydrated with warm teas or water.\n• Gargle warm salt water for throat irritation.\n• Use saline nasal drops for congestion.\n• Rest to support immune function.",
         "warning": "Consult a doctor if symptoms persist beyond 10 days or if breathing becomes labored.",
@@ -45,7 +44,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["headache", "migraine", "head pain", "throbbing", "pulsating", "nausea", "light sensitivity"],
         "condition": "Migraine",
         "explanation": "Migraine is a neurological condition causing throbbing headache pain, typically on one side of the head, often accompanied by sensory sensitivities.",
-        "doctor": "Neurology",
+        "doctor": "Neurologist",
         "severity": "Moderate",
         "advice": "• Rest in a quiet, dark room.\n• Apply a cold compress to the forehead or neck.\n• Avoid bright screens and loud noises.\n• Stay hydrated.",
         "warning": "Seek emergency care if it is the 'worst headache of your life' or matches stroke indicators.",
@@ -60,9 +59,9 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["chest pain", "chest tightness", "palpitations", "heart", "shortness of breath", "sweating"],
         "condition": "Cardiac Concern",
         "explanation": "Chest discomfort or pressure coupled with shortness of breath can indicate a serious cardiovascular concern (angina or coronary insufficiency) requiring immediate assessment.",
-        "doctor": "Cardiology",
+        "doctor": "Cardiologist",
         "severity": "Severe",
-        "advice": "", # No home care advice for severe conditions
+        "advice": "• Seek immediate emergency medical assessment.\n• Rest in a comfortable position and do not exert yourself.\n• Keep emergency contact details handy.", 
         "warning": "Call emergency services immediately if pain radiates to the arm, neck, or jaw, or is accompanied by cold sweats.",
         "questions": [
             "Does the chest pain feel like pressure, tightness, or squeezing?",
@@ -75,7 +74,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["stomach pain", "abdominal pain", "nausea", "vomiting", "diarrhea", "food poisoning", "cramps"],
         "condition": "Gastroenteritis (Food Poisoning)",
         "explanation": "Gastroenteritis is inflammation of the stomach and intestines, commonly caused by consuming contaminated food or water, leading to nausea and fluid loss.",
-        "doctor": "Gastroenterology",
+        "doctor": "General Physician",
         "severity": "Moderate",
         "advice": "• Sip Oral Rehydration Solutions (ORS) frequently.\n• Eat bland foods (bananas, rice, applesauce, toast).\n• Avoid dairy, caffeine, and fatty foods.\n• Wash hands thoroughly.",
         "warning": "Seek medical help if you cannot keep fluids down for 24 hours or see blood in stool.",
@@ -90,7 +89,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["acidity", "heartburn", "acid reflux", "burning stomach", "bloating", "indigestion"],
         "condition": "Acid Reflux / Gastritis",
         "explanation": "Acid reflux occurs when stomach acid flows back into the esophagus, causing burning irritation. Gastritis is inflammation of the stomach lining.",
-        "doctor": "Gastroenterology",
+        "doctor": "General Physician",
         "severity": "Mild",
         "advice": "• Avoid spicy, greasy, or highly acidic foods.\n• Eat smaller, more frequent meals.\n• Do not lie down within 2-3 hours after eating.\n• Elevate your head during sleep.",
         "warning": "Consult a doctor if you experience difficulty swallowing or severe chest burning.",
@@ -105,7 +104,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["breathlessness", "wheezing", "asthma", "difficulty breathing", "chest tightness"],
         "condition": "Asthma / Bronchial Spasm",
         "explanation": "Asthma causes airways to swell, narrow, and produce extra mucus, causing wheezing and shortness of breath, often triggered by allergens.",
-        "doctor": "Pulmonology",
+        "doctor": "Pulmonologist",
         "severity": "Moderate",
         "advice": "• Stay calm and sit upright.\n• Avoid known allergens, dust, and smoke.\n• Use your rescue inhaler if prescribed.\n• Monitor breathing closely.",
         "warning": "Seek emergency care if inhaler fails to relieve breathlessness, or if lips turn blue.",
@@ -120,7 +119,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["high blood pressure", "hypertension", "bp", "dizziness", "blurred vision", "headache"],
         "condition": "Hypertension (High Blood Pressure)",
         "explanation": "Hypertension is persistently high arterial blood pressure. Often asymptomatic, severe elevations can cause headaches, dizziness, or vision changes.",
-        "doctor": "Cardiology",
+        "doctor": "Cardiologist",
         "severity": "Moderate",
         "advice": "• Limit sodium (salt) intake.\n• Practice deep breathing and relaxation.\n• Monitor BP at home.\n• Avoid alcohol and stimulants.",
         "warning": "Seek urgent care if blood pressure exceeds 180/120 mmHg or causes severe headaches.",
@@ -135,7 +134,7 @@ FALLBACK_KNOWLEDGE = [
         "keywords": ["urinary infection", "burning urination", "uti", "cloudy urine", "frequent urination"],
         "condition": "Urinary Tract Infection (UTI)",
         "explanation": "A UTI is a bacterial infection of the urinary system. It causes mucosal irritation leading to painful, frequent, and urgent urination.",
-        "doctor": "General Medicine",
+        "doctor": "General Physician",
         "severity": "Moderate",
         "advice": "• Drink plenty of water to flush out bacteria.\n• Avoid caffeine, alcohol, and sugary drinks.\n• Apply a warm heating pad to lower abdomen.\n• Do not hold urine.",
         "warning": "Seek treatment immediately if you experience fever, chills, or lower back/kidney pain.",
@@ -145,13 +144,74 @@ FALLBACK_KNOWLEDGE = [
             "Is your urine cloudy, dark, or strong-smelling?",
             "Are you experiencing any pain in your lower back or side?"
         ]
+    },
+    {
+        "keywords": ["joint pain", "knee pain", "back pain", "muscle pain", "bone pain", "arthritis", "stiffness", "swollen joint"],
+        "condition": "Musculoskeletal Pain",
+        "explanation": "Musculoskeletal pain affects muscles, bones, ligaments, tendons, or joints, commonly caused by strain, injury, or degenerative arthritis.",
+        "doctor": "Orthopedic",
+        "severity": "Moderate",
+        "advice": "• Rest the affected area and apply cool or warm packs.\n• Perform light stretching if tolerated.\n• Avoid heavy lifting or high impact activities.",
+        "warning": "Consult a specialist if joint is locked, severely swollen, or unable to bear weight.",
+        "questions": [
+            "Did the pain start after an injury or sudden movement?",
+            "Is the pain accompanied by swelling or redness in the joint?",
+            "Does the pain get worse with activity or rest?",
+            "Are you experiencing any numbness or tingling in the affected area?"
+        ]
+    },
+    {
+        "keywords": ["skin rash", "itching", "hives", "eczema", "acne", "skin irritation", "redness", "dry skin", "psoriasis"],
+        "condition": "Dermatological Condition",
+        "explanation": "Skin conditions like eczema, rashes, and irritation occur due to allergic triggers, environmental irritants, or immune response.",
+        "doctor": "Dermatologist",
+        "severity": "Mild",
+        "advice": "• Keep the skin clean and moisturized with mild products.\n• Avoid scratching the area to prevent infection.\n• Identify and eliminate cosmetic or environmental triggers.",
+        "warning": "Seek immediate help if the rash spreads rapidly, blisters, or is accompanied by fever.",
+        "questions": [
+            "Is the rash itchy, painful, or burning?",
+            "Have you used any new soaps, lotions, or detergents recently?",
+            "Does the rash look dry and scaly, or is it weeping/blistering?",
+            "Are you experiencing any swelling in the affected area?"
+        ]
+    },
+    {
+        "keywords": ["ear pain", "hearing loss", "tinnitus", "ringing ear", "earache", "ear infection", "throat pain", "tonsil"],
+        "condition": "ENT Specialist Issue",
+        "explanation": "Conditions affecting ears, nose, or throat, such as tonsillitis or otitis media, typically stem from localized viral or bacterial infections.",
+        "doctor": "ENT Specialist",
+        "severity": "Mild",
+        "advice": "• Keep ears dry and gargle warm salt water for throat symptoms.\n• Stay hydrated and rest your voice.\n• Avoid using cotton swabs inside the ears.",
+        "warning": "See a specialist if you experience sudden hearing loss or severe difficulty swallowing.",
+        "questions": [
+            "Are you experiencing any discharge or fluid draining from your ear?",
+            "Is the ear pain accompanied by a sore throat or fever?",
+            "Do you have a ringing sound (tinnitus) or a feeling of fullness in your ear?",
+            "Are you having difficulty swallowing or opening your mouth?"
+        ]
+    },
+    {
+        "keywords": ["menstrual pain", "irregular periods", "vaginal discharge", "pelvic pain", "pregnancy", "ovarian", "gynecology"],
+        "condition": "Gynecological Issue",
+        "explanation": "Hormonal imbalances, menstrual irregularities, or reproductive tract irritations require specialized evaluation to maintain pelvic and general health.",
+        "doctor": "Gynecologist",
+        "severity": "Moderate",
+        "advice": "• Track cycles and symptoms carefully.\n• Use heat packs for menstrual discomfort.\n• Maintain balanced diet and hydration.",
+        "warning": "Seek urgent care if you experience sudden severe pelvic pain or heavy irregular bleeding.",
+        "questions": [
+            "Are your symptoms related to your menstrual cycle?",
+            "Is there any abnormal color or odor in your vaginal discharge?",
+            "Is there any chance you might be pregnant?",
+            "Are you experiencing severe, sharp pain in your pelvic area?"
+        ]
     }
 ]
 
 DEFAULT_CONDITION = {
+    "keywords": [],
     "condition": "General Malaise",
     "explanation": "Your symptoms are non-specific and do not match a single classic profile. This could indicate a minor viral infection, stress, or exhaustion.",
-    "doctor": "General Medicine",
+    "doctor": "General Physician",
     "severity": "Mild",
     "advice": "• Get 8 hours of sleep.\n• Eat light, nutritious meals.\n• Stay hydrated with water and electrolyte solutions.\n• Avoid heavy physical work.",
     "warning": "Consult a physician if you develop new symptoms or if existing ones worsen.",
@@ -284,62 +344,102 @@ def _run_gemini_clinical(patient_data: dict, evidence: list, emergency_res: dict
             
         prompt = f"""You are a clinical decision-support assistant. Analyze the patient data and retrieved medical evidence to perform clinical reasoning.
         
-Patient Information:
-{p_info}
-
-Retrieved Medical Evidence:
-{ev_str if ev_str else "No evidence retrieved."}
-
-Generate the assessment in JSON format. Do not return any markdown code blocks (such as ```json), introductory text, or explanatory footnotes.
-The JSON must have this exact structure:
-{{
-  "top_conditions": [
-    {{
-      "condition": "<suspected condition name>",
-      "confidence": <integer representing percentage, e.g. 85>,
-      "supporting_symptoms": "<comma-separated list of patient symptoms supporting this>",
-      "explanation": "<2-3 sentence clinical explanation grounding it in retrieved medical evidence>",
-      "severity": "<Mild, Moderate, or Severe>",
-      "recommended_department": "<exactly one medical specialist department>",
-      "home_care_advice": "<3-4 bullet-pointed guidelines for home care, starting with •, only for Mild severity; otherwise empty string>",
-      "safety_warning": "<immediate alert instructions if condition worsens>"
-    }},
-    {{
-      "condition": "<second condition>",
-      "confidence": <integer percentage>,
-      "supporting_symptoms": "<symptoms>",
-      "explanation": "<explanation>",
-      "severity": "<Mild, Moderate, or Severe>",
-      "recommended_department": "<department>",
-      "home_care_advice": "",
-      "safety_warning": "<warning>"
-    }},
-    {{
-      "condition": "<third condition>",
-      "confidence": <integer percentage>,
-      "supporting_symptoms": "<symptoms>",
-      "explanation": "<explanation>",
-      "severity": "<Mild, Moderate, or Severe>",
-      "recommended_department": "<department>",
-      "home_care_advice": "",
-      "safety_warning": "<warning>"
-    }}
-  ],
-  "followup_questions": [
-    "<clinical question 1>",
-    "<clinical question 2>",
-    "<clinical question 3>",
-    "<clinical question 4>"
-  ]
-}}
-
-Rules:
-- Suspected conditions must be ordered by confidence score (highest first).
-- Ground explanations in the retrieved medical evidence. Reference sources like MedlinePlus or openFDA.
-- Recommended departments: General Medicine, Cardiology, Neurology, Orthopedics, Gastroenterology, Pulmonology, Gynecology, ENT, Dermatology, Ophthalmology, Psychiatry, Emergency Medicine.
-- Home care advice: bullet-pointed, each line starting with •. Return empty string if condition is Moderate or Severe.
-- Generate 3-5 clinical follow-up questions targeting potential differentials or symptom details.
-"""
+        Patient Information:
+        {p_info}
+        
+        Retrieved Medical Evidence:
+        {ev_str if ev_str else "No evidence retrieved."}
+        
+        Generate the assessment in JSON format. Do not return any markdown code blocks (such as ```json), introductory text, or explanatory footnotes.
+        The JSON must have this exact structure:
+        {{
+          "top_conditions": [
+            {{
+              "condition": "<suspected condition name>",
+              "confidence": <integer representing percentage, e.g. 85>,
+              "probability": <integer representing percentage, e.g. 85>,
+              "supporting_symptoms": "<comma-separated list of patient symptoms supporting this>",
+              "missing_symptoms": "<comma-separated list of typical symptoms of this condition that the patient does not have>",
+              "explanation": "<2-3 sentence clinical explanation grounding it in retrieved medical evidence>",
+              "severity": "<Mild, Moderate, or Severe>",
+              "recommended_department": "<exactly one of: Neurologist, Cardiologist, Dermatologist, Pulmonologist, Orthopedic, ENT Specialist, Gynecologist, General Physician>",
+              "recommended_specialist": "<same as recommended_department>",
+              "specialist_reason": "<1-2 sentence explanation why this specialist is recommended>",
+              "home_care_advice": "<3-4 bullet-pointed guidelines for home care, starting with •, only for Mild severity; otherwise empty string>",
+              "safety_warning": "<immediate alert instructions if condition worsens>"
+            }},
+            {{
+              "condition": "<second condition>",
+              "confidence": <integer percentage>,
+              "probability": <integer percentage>,
+              "supporting_symptoms": "<symptoms>",
+              "missing_symptoms": "<missing symptoms>",
+              "explanation": "<explanation>",
+              "severity": "<Mild, Moderate, or Severe>",
+              "recommended_department": "<specialist>",
+              "recommended_specialist": "<specialist>",
+              "specialist_reason": "<reason>",
+              "home_care_advice": "",
+              "safety_warning": "<warning>"
+            }},
+            {{
+              "condition": "<third condition>",
+              "confidence": <integer percentage>,
+              "probability": <integer percentage>,
+              "supporting_symptoms": "<symptoms>",
+              "missing_symptoms": "<missing symptoms>",
+              "explanation": "<explanation>",
+              "severity": "<Mild, Moderate, or Severe>",
+              "recommended_department": "<specialist>",
+              "recommended_specialist": "<specialist>",
+              "specialist_reason": "<reason>",
+              "home_care_advice": "",
+              "safety_warning": "<warning>"
+            }},
+            {{
+              "condition": "<fourth condition>",
+              "confidence": <integer percentage>,
+              "probability": <integer percentage>,
+              "supporting_symptoms": "<symptoms>",
+              "missing_symptoms": "<missing symptoms>",
+              "explanation": "<explanation>",
+              "severity": "<Mild, Moderate, or Severe>",
+              "recommended_department": "<specialist>",
+              "recommended_specialist": "<specialist>",
+              "specialist_reason": "<reason>",
+              "home_care_advice": "",
+              "safety_warning": "<warning>"
+            }},
+            {{
+              "condition": "<fifth condition>",
+              "confidence": <integer percentage>,
+              "probability": <integer percentage>,
+              "supporting_symptoms": "<symptoms>",
+              "missing_symptoms": "<missing symptoms>",
+              "explanation": "<explanation>",
+              "severity": "<Mild, Moderate, or Severe>",
+              "recommended_department": "<specialist>",
+              "recommended_specialist": "<specialist>",
+              "specialist_reason": "<reason>",
+              "home_care_advice": "",
+              "safety_warning": "<warning>"
+            }}
+          ],
+          "followup_questions": [
+            "<clinical question 1>",
+            "<clinical question 2>",
+            "<clinical question 3>",
+            "<clinical question 4>"
+          ]
+        }}
+        
+        Rules:
+        - Suspected conditions must be ordered by confidence score (highest first).
+        - Ground explanations in the retrieved medical evidence. Reference sources like MedlinePlus or openFDA.
+        - Recommended department/specialist must be exactly one of: Neurologist, Cardiologist, Dermatologist, Pulmonologist, Orthopedic, ENT Specialist, Gynecologist, General Physician.
+        - Home care advice: bullet-pointed, each line starting with •. Return empty string if condition is Moderate or Severe.
+        - Generate 3-5 clinical follow-up questions targeting potential differentials or symptom details.
+        """
         response = model.generate_content(prompt)
         raw = response.text.strip()
         raw = re.sub(r"^```(?:json)?\s*", "", raw)
@@ -350,6 +450,22 @@ Rules:
         
         # Quick validation
         if "top_conditions" in data and len(data["top_conditions"]) >= 3:
+            # Pad to 5 conditions if needed
+            while len(data["top_conditions"]) < 5:
+                data["top_conditions"].append({
+                    "condition": "General Malaise",
+                    "confidence": 30,
+                    "probability": 30,
+                    "supporting_symptoms": "general symptoms",
+                    "missing_symptoms": "None",
+                    "explanation": "No additional matching conditions were identified.",
+                    "severity": "Mild",
+                    "recommended_department": "General Physician",
+                    "recommended_specialist": "General Physician",
+                    "specialist_reason": "General Physician is recommended for routine symptom management.",
+                    "home_care_advice": "• Rest and drink fluids.",
+                    "safety_warning": "Consult a doctor if symptoms persist."
+                })
             return data
         return None
     except Exception as e:
@@ -372,9 +488,9 @@ def _run_fallback_clinical(patient_data: dict, evidence: list, emergency_res: di
     # Sort descending
     scored.sort(key=lambda x: x[0], reverse=True)
     
-    # Pick top 3 or pad with default
-    matched_entries = [item[1] for item in scored[:3]]
-    while len(matched_entries) < 3:
+    # Pick top 5 or pad with default
+    matched_entries = [item[1] for item in scored[:5]]
+    while len(matched_entries) < 5:
         # Avoid duplicate defaults
         default_item = DEFAULT_CONDITION.copy()
         if not any(e["condition"] == default_item["condition"] for e in matched_entries):
@@ -394,18 +510,29 @@ def _run_fallback_clinical(patient_data: dict, evidence: list, emergency_res: di
     # Build results
     for idx, entry in enumerate(matched_entries):
         # Calculate dummy base confidence for the engine to refine
-        base_confidence = 80 - (idx * 10)
+        base_confidence = max(20, 85 - (idx * 15))
         
         # Compile advice: only show if mild
         advice = entry["advice"] if entry["severity"] == "Mild" else ""
         
+        # Matching and missing keywords
+        matching_kws = [kw for kw in entry["keywords"] if kw in combined]
+        missing_kws = [kw for kw in entry["keywords"] if kw not in combined]
+        
+        supporting_symptoms = ", ".join(matching_kws) if matching_kws else "general symptoms"
+        missing_symptoms = ", ".join(missing_kws) if missing_kws else "None"
+        
         top_conditions.append({
             "condition": entry["condition"],
             "confidence": base_confidence,
-            "supporting_symptoms": ", ".join(kw for kw in entry["keywords"] if kw in combined) or "general symptoms",
+            "probability": base_confidence,
+            "supporting_symptoms": supporting_symptoms,
+            "missing_symptoms": missing_symptoms,
             "explanation": entry["explanation"],
             "severity": entry["severity"],
             "recommended_department": entry["doctor"],
+            "recommended_specialist": entry["doctor"],
+            "specialist_reason": f"A specialist in {entry['doctor']} is recommended to evaluate symptoms of {entry['condition']}.",
             "home_care_advice": advice,
             "safety_warning": entry["warning"]
         })
